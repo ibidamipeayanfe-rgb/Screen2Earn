@@ -15,6 +15,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.Gravity
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
@@ -24,6 +25,10 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import java.net.HttpURLConnection
+import java.net.URL
+import org.json.JSONObject
+import java.util.concurrent.Executors
 
 class MainActivity : Activity() {
 
@@ -44,11 +49,18 @@ class MainActivity : Activity() {
     }
 
     private var dailyGoalMinutes = 240
+    private val supabaseUrl = "https://uunazsefijblhvjlqocj.supabase.co"
+    private val supabaseKey = "sb_publishable_bH8hfYmLWKvxZlfET_k-Sw_IrXN0Pvr"
+    private val networkExecutor = Executors.newSingleThreadExecutor()
+    private var authToken: String? = null
+    private var authEmail: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         dailyGoalMinutes = preferences.getInt("daily_goal", 240)
-        buildDashboard()
+        authToken = preferences.getString("auth_token", null)
+        authEmail = preferences.getString("auth_email", null)
+        if (authToken.isNullOrBlank()) buildAuthScreen() else buildDashboard()
     }
 
     override fun onResume() {
@@ -109,6 +121,130 @@ class MainActivity : Activity() {
         )
     }
 
+
+    private fun buildAuthScreen() {
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(dp(28), dp(30), dp(28), dp(30))
+            setBackgroundColor(backgroundColor)
+        }
+        root.addView(text("Screen2Earn", 34f, Color.WHITE, true))
+        root.addView(text("YOUR SCREEN TIME HAS VALUE", 13f, accentColor, true))
+        val intro = text("Create an account or log in to continue.", 15f, Color.LTGRAY)
+        intro.setPadding(0, dp(18), 0, dp(24))
+        root.addView(intro)
+
+        val emailInput = EditText(this).apply {
+            hint = "Email address"
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+            setSingleLine(true)
+            setTextColor(Color.WHITE)
+            setHintTextColor(Color.LTGRAY)
+            setPadding(dp(14), dp(12), dp(14), dp(12))
+            background = rounded(cardColor, 12)
+        }
+        root.addView(emailInput, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, dp(54)
+        ))
+
+        val passwordInput = EditText(this).apply {
+            hint = "Password (at least 6 characters)"
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+            setSingleLine(true)
+            setTextColor(Color.WHITE)
+            setHintTextColor(Color.LTGRAY)
+            setPadding(dp(14), dp(12), dp(14), dp(12))
+            background = rounded(cardColor, 12)
+        }
+        val passwordParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, dp(54)
+        )
+        passwordParams.setMargins(0, dp(12), 0, dp(18))
+        root.addView(passwordInput, passwordParams)
+
+        val status = text("", 13f, Color.YELLOW)
+        status.setPadding(0, dp(12), 0, dp(12))
+        root.addView(status)
+
+        fun submitAuth(signUp: Boolean) {
+            val email = emailInput.text.toString().trim()
+            val password = passwordInput.text.toString()
+            if (email.isBlank() || !email.contains("@") || password.length < 6) {
+                status.text = "Enter a valid email and a password of at least 6 characters."
+                return
+            }
+            status.setTextColor(Color.YELLOW)
+            status.text = if (signUp) "Creating your account..." else "Logging in..."
+            networkExecutor.execute {
+                try {
+                    val endpoint = if (signUp) "/auth/v1/signup" else "/auth/v1/token?grant_type=password"
+                    val connection = (URL(supabaseUrl + endpoint).openConnection() as HttpURLConnection).apply {
+                        requestMethod = "POST"
+                        connectTimeout = 15000
+                        readTimeout = 15000
+                        doOutput = true
+                        setRequestProperty("apikey", supabaseKey)
+                        setRequestProperty("Content-Type", "application/json")
+                    }
+                    val payload = JSONObject().put("email", email).put("password", password).toString()
+                    connection.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
+                    val code = connection.responseCode
+                    val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+                    val response = stream.bufferedReader().use { it.readText() }
+                    connection.disconnect()
+                    val json = JSONObject(response)
+                    if (code in 200..299) {
+                        val token = json.optString("access_token", "")
+                        if (token.isNotBlank()) {
+                            preferences.edit().putString("auth_token", token).putString("auth_email", email).apply()
+                            authToken = token
+                            authEmail = email
+                            runOnUiThread { buildDashboard() }
+                        } else if (signUp) {
+                            runOnUiThread {
+                                status.setTextColor(accentColor)
+                                status.text = "Account created! Check your email to confirm it, then log in here."
+                            }
+                        } else {
+                            runOnUiThread { status.text = "Login response did not include a session. Please try again." }
+                        }
+                    } else {
+                        val message = json.optString("msg", json.optString("message", json.optString("error_description", "Request failed ($code).")))
+                        runOnUiThread { status.text = message }
+                    }
+                } catch (e: Exception) {
+                    runOnUiThread { status.text = "Connection problem. Check your internet and try again." }
+                }
+            }
+        }
+
+        val loginButton = Button(this).apply {
+            text = "LOG IN"
+            setOnClickListener { submitAuth(false) }
+        }
+        root.addView(loginButton, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, dp(52)
+        ))
+        val signupButton = Button(this).apply {
+            text = "CREATE ACCOUNT"
+            setOnClickListener { submitAuth(true) }
+        }
+        val signupParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, dp(52)
+        )
+        signupParams.setMargins(0, dp(10), 0, 0)
+        root.addView(signupButton, signupParams)
+        setContentView(root)
+    }
+
+    private fun logout() {
+        preferences.edit().remove("auth_token").remove("auth_email").apply()
+        authToken = null
+        authEmail = null
+        buildAuthScreen()
+    }
+
     private fun buildDashboard() {
         val scroll = ScrollView(this).apply {
             setBackgroundColor(backgroundColor)
@@ -132,6 +268,14 @@ class MainActivity : Activity() {
         header.addView(
             text("YOUR SCREEN TIME HAS VALUE", 13f, accentColor, true)
         )
+        if (!authEmail.isNullOrBlank()) {
+            header.addView(text("Signed in as $authEmail", 12f, Color.LTGRAY))
+        }
+        val logoutButton = Button(this).apply {
+            text = "LOG OUT"
+            setOnClickListener { logout() }
+        }
+        header.addView(logoutButton)
         content.addView(header)
 
         content.addView(text("Your Dashboard", 23f, Color.WHITE, true))
