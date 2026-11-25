@@ -2,959 +2,618 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#101126">
-<title>Screen2Earn | Your Screen Time Has Value</title>
-
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-:root {
-  --bg: #101126;
-  --panel: #191a35;
-  --panel2: #20213e;
-  --purple: #8865ff;
-  --green: #36e6a0;
-  --white: #ffffff;
-  --muted: #999bb7;
-  --border: rgba(255,255,255,.08);
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  font-family: 'Inter', sans-serif;
-  background: var(--bg);
-  color: var(--white);
-  min-height: 100vh;
-}
-
-button, input { font: inherit; }
-button { cursor: pointer; }
-
-.hidden { display: none !important; }
-
-.container {
-  width: min(1100px, 92%);
-  margin: auto;
-}
-
-/* HEADER */
-
-header {
-  height: 76px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--border);
-}
-
-.logo {
-  font-size: 23px;
-  font-weight: 800;
-  letter-spacing: -1px;
-}
-
-.logo span { color: var(--green); }
-
-.logo-icon {
-  color: var(--purple);
-  margin-right: 7px;
-}
-
-.header-btn, .primary-btn {
-  border: none;
-  background: linear-gradient(120deg,#7957ff,#a17bff);
-  color: white;
-  padding: 13px 22px;
-  border-radius: 12px;
-  font-weight: 700;
-}
-
-.primary-btn:hover, .header-btn:hover {
-  opacity: .88;
-}
-
-/* WELCOME */
-
-.welcome {
-  min-height: 85vh;
-  display: grid;
-  grid-template-columns: 1.1fr .9fr;
-  align-items: center;
-  gap: 50px;
-  padding-top: 45px;
-  padding-bottom: 45px;
-}
-
-.eyebrow {
-  color: var(--green);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  margin-bottom: 20px;
-}
-
-.welcome h1 {
-  font-size: clamp(42px,6vw,67px);
-  line-height: 1.08;
-  letter-spacing: -3px;
-  margin-bottom: 22px;
-}
-
-.welcome h1 span { color: var(--green); }
-
-.description {
-  color: var(--muted);
-  font-size: 16px;
-  line-height: 1.8;
-  max-width: 470px;
-  margin-bottom: 30px;
-}
-
-.hero-card {
-  background: linear-gradient(145deg,#29204f,#171b36);
-  border: 1px solid var(--border);
-  border-radius: 25px;
-  padding: 30px;
-  box-shadow: 0 25px 80px #0005;
-}
-
-.hero-card h3 { color: var(--muted); font-size: 14px; }
-
-.hero-amount {
-  font-size: 39px;
-  font-weight: 800;
-  margin: 14px 0;
-}
-
-.hero-amount span { color: var(--green); }
-
-.hero-stat {
-  display: flex;
-  justify-content: space-between;
-  padding: 16px 0;
-  border-top: 1px solid var(--border);
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.hero-stat strong { color: white; }
-
-/* AUTH */
-
-.auth-wrap {
-  min-height: 85vh;
-  display: grid;
-  place-items: center;
-  padding: 35px 0;
-}
-
-.auth-card {
-  width: min(430px,100%);
-  background: var(--panel);
-  padding: 32px;
-  border: 1px solid var(--border);
-  border-radius: 22px;
-}
-
-.auth-card h2 { font-size: 27px; margin-bottom: 9px; }
-
-.auth-card > p {
-  color: var(--muted);
-  margin-bottom: 25px;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.field { margin-bottom: 17px; }
-
-.field label {
-  display: block;
-  font-size: 12px;
-  color: var(--muted);
-  margin-bottom: 8px;
-}
-
-.field input {
-  width: 100%;
-  padding: 14px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  color: white;
-  outline: none;
-}
-
-.field input:focus { border-color: var(--purple); }
-
-.auth-card .primary-btn { width: 100%; margin-top: 8px; }
-
-.auth-switch {
-  text-align: center;
-  margin-top: 20px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.link {
-  color: var(--green);
-  background: none;
-  border: none;
-  font-weight: 700;
-}
-
-/* APP */
-
-.app-layout {
-  display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 28px;
-  padding-top: 30px;
-  padding-bottom: 60px;
-}
-
-.sidebar {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 20px;
-  height: fit-content;
-  position: sticky;
-  top: 20px;
-}
-
-.sidebar .logo { margin-bottom: 30px; }
-
-.nav-btn {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding: 14px;
-  width: 100%;
-  border: none;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--muted);
-  text-align: left;
-  margin-bottom: 7px;
-  font-size: 13px;
-}
-
-.nav-btn.active, .nav-btn:hover {
-  background: #8061ff20;
-  color: white;
-}
-
-.logout {
-  margin-top: 30px;
-  color: #ff8a8a;
-}
-
-.main-content { min-width: 0; }
-
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 27px;
-  gap: 15px;
-}
-
-.topbar h2 { font-size: 25px; }
-
-.topbar p { color: var(--muted); font-size: 12px; margin-top: 6px; }
-
-.avatar {
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: #7251e9;
-  font-weight: 800;
-}
-
-/* CARDS */
-
-.grid-cards {
-  display: grid;
-  grid-template-columns: repeat(3,1fr);
-  gap: 15px;
-  margin-bottom: 20px;
-}
-
-.card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 17px;
-  padding: 22px;
-}
-
-.card-label {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.card-value {
-  font-size: 26px;
-  font-weight: 800;
-  margin-top: 14px;
-}
-
-.green { color: var(--green); }
-.purple { color: #ae91ff; }
-
-.card-note {
-  font-size: 11px;
-  color: var(--muted);
-  margin-top: 10px;
-}
-
-/* MAIN DASHBOARD */
-
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: 1.3fr .7fr;
-  gap: 17px;
-  margin-bottom: 20px;
-}
-
-.section-title {
-  font-size: 16px;
-  margin-bottom: 19px;
-}
-
-.screen-time {
-  display: flex;
-  align-items: center;
-  gap: 25px;
-  padding: 12px 0;
-}
-
-.time-circle {
-  width: 130px;
-  height: 130px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: conic-gradient(var(--purple) 70%,#343450 0);
-  position: relative;
-  flex-shrink: 0;
-}
-
-.time-circle::before {
-  content: "";
-  position: absolute;
-  inset: 9px;
-  border-radius: 50%;
-  background: var(--panel);
-}
-
-.time-circle div { z-index: 1; text-align: center; }
-
-.time-circle strong { display: block; font-size: 23px; }
-.time-circle small { color: var(--muted); font-size: 10px; }
-
-.time-details p {
-  color: var(--muted);
-  font-size: 12px;
-  margin-bottom: 12px;
-}
-
-.time-details strong { color: white; }
-
-.progress-track {
-  width: 100%;
-  height: 7px;
-  background: #33334d;
-  border-radius: 20px;
-  margin-top: 9px;
-  overflow: hidden;
-}
-
-.progress {
-  height: 100%;
-  width: 70%;
-  background: var(--green);
-  border-radius: 20px;
-}
-
-.earn-box {
-  background: linear-gradient(145deg,#29204f,#191a35);
-}
-
-.earn-box .big {
-  font-size: 33px;
-  font-weight: 800;
-  margin: 17px 0 8px;
-}
-
-.earn-box p {
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-.small-btn {
-  background: #7957ff;
-  border: none;
-  border-radius: 9px;
-  color: white;
-  padding: 11px 15px;
-  margin-top: 20px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-/* ACTIVITY */
-
-.activity-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 13px;
-}
-
-.activity-item:last-child { border: none; }
-
-.activity-item small {
-  display: block;
-  color: var(--muted);
-  margin-top: 6px;
-  font-size: 11px;
-}
-
-/* WALLET */
-
-.wallet-banner {
-  background: linear-gradient(120deg,#6743d9,#956bff);
-  padding: 30px;
-  border-radius: 20px;
-  margin-bottom: 20px;
-}
-
-.wallet-banner p { font-size: 13px; opacity: .8; }
-.wallet-banner h2 { font-size: 38px; margin: 13px 0; }
-
-.wallet-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.wallet-actions button {
-  background: white;
-  color: #5132bd;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 10px;
-  font-weight: 700;
-  font-size: 12px;
-}
-
-/* PAGES */
-
-.page { display: none; }
-.page.active { display: block; }
-
-.notice {
-  padding: 14px;
-  border-radius: 10px;
-  background: #8061ff16;
-  border: 1px solid #8061ff44;
-  color: #c5b4ff;
-  font-size: 12px;
-  line-height: 1.6;
-  margin-bottom: 17px;
-}
-
-/* FOOTER */
-
-footer {
-  text-align: center;
-  color: var(--muted);
-  font-size: 11px;
-  padding: 30px 10px;
-  border-top: 1px solid var(--border);
-}
-
-/* RESPONSIVE */
-
-@media(max-width:800px) {
-  .welcome {
-    grid-template-columns: 1fr;
-    gap: 30px;
-    padding-top: 55px;
-  }
-
-  .app-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .sidebar {
-    position: static;
-    display: flex;
-    overflow-x: auto;
-    gap: 5px;
-    padding: 10px;
-  }
-
-  .sidebar .logo, .logout { display: none; }
-
-  .nav-btn {
-    min-width: max-content;
-    width: auto;
-    margin: 0;
-    padding: 12px;
-  }
-
-  .grid-cards { grid-template-columns: repeat(2,1fr); }
-}
-
-@media(max-width:540px) {
-  .grid-cards { grid-template-columns: 1fr 1fr; gap: 9px; }
-  .card { padding: 15px; }
-  .card-value { font-size: 21px; }
-  .dashboard-grid { grid-template-columns: 1fr; }
-  .screen-time { gap: 15px; }
-  .time-circle { width: 110px; height: 110px; }
-  .welcome h1 { letter-spacing: -2px; }
-  .auth-card { padding: 24px; }
-  .topbar h2 { font-size: 20px; }
-}
-
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#10152d">
+  <title>Screen2Earn — Your Screen Time Has Value</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #0b1022;
+      color: #fff;
+      min-height: 100vh;
+    }
+
+    button, input {
+      font: inherit;
+    }
+
+    .container {
+      width: min(100% - 32px, 1000px);
+      margin: auto;
+    }
+
+    header {
+      padding: 22px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 25px;
+      font-weight: 800;
+      color: #65e6a5;
+    }
+
+    .logo span {
+      color: white;
+    }
+
+    .tagline {
+      color: #aab3ce;
+      font-size: 13px;
+      margin-top: 5px;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 65px 10px 45px;
+    }
+
+    .hero h1 {
+      font-size: clamp(35px, 7vw, 58px);
+      line-height: 1.1;
+      margin-bottom: 18px;
+    }
+
+    .hero h1 span {
+      color: #65e6a5;
+    }
+
+    .hero p {
+      color: #aab3ce;
+      max-width: 550px;
+      margin: auto;
+      line-height: 1.7;
+    }
+
+    .panel {
+      background: #171f3b;
+      border: 1px solid #293455;
+      border-radius: 20px;
+      padding: 26px;
+      margin: 20px auto;
+      max-width: 460px;
+      box-shadow: 0 15px 45px #0003;
+    }
+
+    .panel h2 {
+      font-size: 25px;
+      margin-bottom: 9px;
+    }
+
+    .muted {
+      color: #aab3ce;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .field {
+      margin-top: 18px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: #d5dbee;
+    }
+
+    input {
+      width: 100%;
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #354366;
+      background: #0e1530;
+      color: white;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #65e6a5;
+    }
+
+    .main-btn {
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      background: #65e6a5;
+      color: #092016;
+      font-weight: 800;
+      padding: 16px;
+      margin-top: 22px;
+      cursor: pointer;
+    }
+
+    .main-btn:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+
+    .switch {
+      text-align: center;
+      margin-top: 20px;
+      color: #aab3ce;
+      font-size: 14px;
+    }
+
+    .switch button {
+      background: none;
+      border: none;
+      color: #65e6a5;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .message {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 9px;
+      background: #263653;
+      color: #d9e8ff;
+      font-size: 13px;
+      line-height: 1.5;
+      display: none;
+    }
+
+    .dashboard {
+      padding: 25px 0 60px;
+    }
+
+    .dash-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-bottom: 25px;
+    }
+
+    .logout {
+      padding: 11px 17px;
+      border: 1px solid #526080;
+      border-radius: 9px;
+      color: white;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .welcome-card {
+      background: linear-gradient(120deg, #263d69, #174c49);
+      border-radius: 20px;
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+
+    .welcome-card p {
+      color: #d0e5e1;
+      margin-top: 9px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+
+    .stat {
+      background: #171f3b;
+      border: 1px solid #293455;
+      border-radius: 17px;
+      padding: 22px;
+    }
+
+    .stat small {
+      color: #aab3ce;
+    }
+
+    .stat h3 {
+      font-size: 27px;
+      margin-top: 12px;
+      color: #65e6a5;
+    }
+
+    .section {
+      background: #171f3b;
+      border: 1px solid #293455;
+      border-radius: 17px;
+      padding: 23px;
+      margin-top: 18px;
+    }
+
+    .section h3 {
+      margin-bottom: 13px;
+    }
+
+    .notice {
+      color: #f3d78b;
+      font-size: 13px;
+      line-height: 1.6;
+      margin-top: 12px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 30px 10px;
+      color: #7e89a9;
+      font-size: 12px;
+    }
+
+    @media (max-width: 520px) {
+      .hero {
+        padding-top: 42px;
+      }
+
+      .panel {
+        padding: 21px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .welcome-card {
+        padding: 22px;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<header class="container">
-  <div class="logo"><span class="logo-icon">◈</span>Screen<span>2Earn</span></div>
-  <button class="header-btn" id="headerAction" onclick="showAuth('signup')">
-    Get Started
-  </button>
-</header>
+  <div class="container">
 
-<!-- WELCOME SCREEN -->
-
-<section id="welcome" class="container welcome">
-  <div>
-    <div class="eyebrow">THE FUTURE OF DIGITAL REWARDS</div>
-    <h1>Your Screen Time.<br>Your <span>Reward.</span></h1>
-    <p class="description">
-      Turn eligible screen time into opportunities.
-      Connect with sponsored campaigns, track your activity
-      and discover a smarter way to earn.
-    </p>
-    <button class="primary-btn" onclick="showAuth('signup')">
-      Create Free Account →
-    </button>
-    <button class="link" style="margin-left:15px"
-      onclick="showAuth('login')">Log In</button>
-  </div>
-
-  <div class="hero-card">
-    <h3>YOUR DAILY REWARD PREVIEW</h3>
-    <div class="hero-amount"><span>₦</span>250.00</div>
-    <div class="hero-stat">
-      <span>Eligible usage example</span>
-      <strong>5 hours</strong>
-    </div>
-    <div class="hero-stat">
-      <span>Reward rate example</span>
-      <strong>₦50/hour</strong>
-    </div>
-    <div class="hero-stat">
-      <span>Reward status</span>
-      <strong class="green">Demo only</strong>
-    </div>
-    <p class="card-note">Illustrative figures only. Actual rewards depend on funded campaigns and verified eligibility.</p>
-  </div>
-</section>
-
-<!-- AUTHENTICATION -->
-
-<section id="auth" class="container auth-wrap hidden">
-  <div class="auth-card">
-    <div class="logo" style="margin-bottom:25px">
-      ◈ Screen<span>2Earn</span>
-    </div>
-
-    <h2 id="authTitle">Create your account</h2>
-    <p id="authDescription">Join Screen2Earn and explore digital rewards.</p>
-
-    <form id="authForm">
-      <div id="nameField" class="field">
-        <label>Full name</label>
-        <input id="fullName" type="text" placeholder="Your full name">
-      </div>
-
-      <div class="field">
-        <label>Email address</label>
-        <input id="email" type="email" placeholder="you@example.com" required>
-      </div>
-
-      <div class="field">
-        <label>Password</label>
-        <input id="password" type="password" placeholder="At least 6 characters" minlength="6" required>
-      </div>
-
-      <button class="primary-btn" type="submit" id="authSubmit">
-        Create Account
-      </button>
-    </form>
-
-    <div class="auth-switch">
-      <span id="switchText">Already have an account?</span>
-      <button class="link" id="switchButton" onclick="toggleAuth()">
-        Log In
-      </button>
-    </div>
-
-    <p style="margin-top:20px;font-size:11px;text-align:center">
-      Prototype authentication only. Do not use a real password.
-    </p>
-  </div>
-</section>
-
-<!-- APPLICATION -->
-
-<section id="application" class="container app-layout hidden">
-
-  <aside class="sidebar">
-    <div class="logo">◈ Screen<span>2Earn</span></div>
-
-    <button class="nav-btn active" onclick="navigate('dashboard',this)">⌂ Dashboard</button>
-    <button class="nav-btn" onclick="navigate('tracking',this)">◷ Screen Time</button>
-    <button class="nav-btn" onclick="navigate('wallet',this)">▣ My Wallet</button>
-    <button class="nav-btn" onclick="navigate('activity',this)">↗ Activity</button>
-    <button class="nav-btn logout" onclick="logout()">↪ Log Out</button>
-  </aside>
-
-  <main class="main-content">
-
-    <div class="topbar">
+    <header>
       <div>
-        <h2 id="greeting">Welcome back!</h2>
-        <p>Your Screen2Earn dashboard</p>
+        <div class="logo">Screen<span>2Earn</span></div>
+        <div class="tagline">Your Screen Time Has Value.</div>
       </div>
-      <div class="avatar" id="avatar">U</div>
-    </div>
+    </header>
 
-    <!-- DASHBOARD PAGE -->
-
-    <section class="page active" id="dashboard">
-
-      <div class="notice">
-        <strong>DEMO MODE:</strong> All balances and usage figures shown are sample data. No actual earnings or payments have been generated.
-      </div>
-
-      <div class="grid-cards">
-
-        <div class="card">
-          <div class="card-label">Today's Screen Time</div>
-          <div class="card-value">5h 20m</div>
-          <div class="card-note">Sample usage data</div>
-        </div>
-
-        <div class="card">
-          <div class="card-label">Eligible Time</div>
-          <div class="card-value purple">5h 00m</div>
-          <div class="card-note">Illustrative eligibility</div>
-        </div>
-
-        <div class="card">
-          <div class="card-label">Sample Rewards</div>
-          <div class="card-value green">₦250</div>
-          <div class="card-note">Not withdrawable</div>
-        </div>
-
-      </div>
-
-      <div class="dashboard-grid">
-
-        <div class="card">
-          <h3 class="section-title">Daily Screen Time</h3>
-
-          <div class="screen-time">
-            <div class="time-circle">
-              <div>
-                <strong>5h</strong>
-                <small>20 minutes</small>
-              </div>
-            </div>
-
-            <div class="time-details">
-              <p>Daily target: <strong>6 hours</strong></p>
-              <p>Progress: <strong>83%</strong></p>
-              <div class="progress-track">
-                <div class="progress"></div>
-              </div>
-              <p style="margin-top:12px">Illustrative tracking</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="card earn-box">
-          <div class="card-label">Potential Daily Rewards</div>
-          <div class="big green">₦250.00</div>
-          <p>Example reward based on 5 eligible hours at ₦50/hour.</p>
-          <button class="small-btn" onclick="navigate('tracking',document.querySelectorAll('.nav-btn')[1])">
-            View Screen Time
-          </button>
-        </div>
-
-      </div>
-
-      <div class="card">
-        <h3 class="section-title">Recent Activity</h3>
-        <div class="activity-item">
-          <div>◷ Screen time recorded<small>Sample daily activity</small></div>
-          <strong>5h 20m</strong>
-        </div>
-        <div class="activity-item">
-          <div>✦ Reward calculation<small>Demonstration calculation</small></div>
-          <strong class="green">₦250</strong>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- SCREEN TIME PAGE -->
-
-    <section class="page" id="tracking">
-
-      <div class="notice">
-        Actual phone monitoring is not connected yet. This page currently displays sample statistics.
-      </div>
-
-      <div class="card" style="margin-bottom:18px">
-        <h3 class="section-title">Your Screen Time</h3>
-        <div class="screen-time">
-          <div class="time-circle">
-            <div>
-              <strong>5h</strong>
-              <small>20 min</small>
-            </div>
-          </div>
-          <div class="time-details">
-            <p>Daily target: <strong>6 hours</strong></p>
-            <p>Sample progress: <strong>83%</strong></p>
-            <p class="green">Demo tracking active</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3 class="section-title">Weekly Screen Time</h3>
-        <div class="activity-item"><span>Monday</span><strong>4h 20m</strong></div>
-        <div class="activity-item"><span>Tuesday</span><strong>5h 10m</strong></div>
-        <div class="activity-item"><span>Wednesday</span><strong>3h 45m</strong></div>
-        <div class="activity-item"><span>Thursday</span><strong>6h 00m</strong></div>
-        <div class="activity-item"><span>Friday</span><strong>5h 20m</strong></div>
-      </div>
-
-    </section>
-
-    <!-- WALLET PAGE -->
-
-    <section class="page" id="wallet">
-
-      <div class="notice">
-        Your wallet is in demonstration mode. Real balances, deposits and withdrawals will be enabled after payment integration.
-      </div>
-
-      <div class="wallet-banner">
-        <p>DEMONSTRATION WALLET BALANCE</p>
-        <h2>₦250.00</h2>
-        <p>Sample reward balance · Not real funds</p>
-        <div class="wallet-actions">
-          <button onclick="alert('Bank withdrawals will be available after we connect our payment provider and verify funded rewards.')">
-            Withdraw
-          </button>
-          <button onclick="alert('Your real transaction history will appear here after backend integration.')">
-            Transactions
-          </button>
-        </div>
-      </div>
-
-      <div class="grid-cards">
-        <div class="card">
-          <div class="card-label">Total Rewards</div>
-          <div class="card-value green">₦250</div>
-        </div>
-        <div class="card">
-          <div class="card-label">Withdrawn</div>
-          <div class="card-value">₦0</div>
-        </div>
-        <div class="card">
-          <div class="card-label">Pending</div>
-          <div class="card-value purple">₦0</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3 class="section-title">Wallet Transactions</h3>
-        <p style="color:var(--muted);font-size:13px">
-          No real transactions yet. This is a prototype wallet.
+    <!-- WELCOME PAGE -->
+    <section id="welcomePage">
+      <div class="hero">
+        <h1>Your Phone.<br>Your Time.<br><span>Your Opportunity.</span></h1>
+        <p>
+          Screen2Earn is building a platform where eligible mobile
+          screen time can create earning opportunities through
+          sponsored campaigns.
         </p>
       </div>
 
+      <div class="panel">
+        <h2>Welcome to Screen2Earn</h2>
+        <p class="muted">
+          Create an account or log in to access your personal dashboard.
+        </p>
+
+        <button class="main-btn" onclick="showAuth('signup')">
+          Create Account
+        </button>
+
+        <button class="main-btn" style="background:#293653;color:white;margin-top:12px"
+          onclick="showAuth('login')">
+          Log In
+        </button>
+      </div>
     </section>
 
-    <!-- ACTIVITY PAGE -->
+    <!-- AUTHENTICATION PAGE -->
+    <section id="authPage" class="hidden">
+      <div class="hero" style="padding-bottom:15px">
+        <h1><span>Screen2Earn</span></h1>
+        <p>Your screen time has value.</p>
+      </div>
 
-    <section class="page" id="activity">
-      <div class="card">
-        <h3 class="section-title">Your Activity History</h3>
+      <div class="panel">
+        <h2 id="authTitle">Create your account</h2>
+        <p class="muted" id="authDescription">
+          Join Screen2Earn and get started.
+        </p>
 
-        <div class="activity-item">
-          <div>Screen time sample<small>Today's activity</small></div>
-          <strong>5h 20m</strong>
+        <form id="authForm">
+          <div class="field" id="nameField">
+            <label for="fullName">Full name</label>
+            <input id="fullName" type="text"
+              placeholder="Enter your full name"
+              autocomplete="name">
+          </div>
+
+          <div class="field">
+            <label for="email">Email address</label>
+            <input id="email" type="email"
+              placeholder="Enter your email"
+              autocomplete="email" required>
+          </div>
+
+          <div class="field">
+            <label for="password">Password</label>
+            <input id="password" type="password"
+              placeholder="Create a password"
+              autocomplete="current-password"
+              minlength="6" required>
+          </div>
+
+          <button class="main-btn" id="authSubmit" type="submit">
+            Create Account
+          </button>
+        </form>
+
+        <div id="authMessage" class="message"></div>
+
+        <div class="switch">
+          <span id="switchText">Already have an account?</span>
+          <button id="switchButton" onclick="toggleAuth()">
+            Log in
+          </button>
         </div>
 
-        <div class="activity-item">
-          <div>Reward estimate<small>Today's calculation</small></div>
-          <strong class="green">₦250</strong>
-        </div>
-
-        <div class="activity-item">
-          <div>Account created<small>Prototype session</small></div>
-          <strong>Active</strong>
+        <div class="switch">
+          <button onclick="showWelcome()">Back to home</button>
         </div>
       </div>
     </section>
 
-  </main>
-</section>
+    <!-- DASHBOARD -->
+    <section id="dashboardPage" class="hidden">
+      <div class="dashboard">
 
-<footer class="container">
-  © 2026 Screen2Earn. Your Screen Time Has Value.
-  <br><br>
-  Prototype version 1.0 · Demonstration data only.
-</footer>
+        <div class="dash-top">
+          <div>
+            <div class="logo">Screen<span>2Earn</span></div>
+            <p class="muted">Your personal dashboard</p>
+          </div>
+          <button class="logout" onclick="logout()">Log out</button>
+        </div>
 
-<script>
+        <div class="welcome-card">
+          <h2>Welcome, <span id="userName">User</span>!</h2>
+          <p>Your Screen2Earn journey starts here.</p>
+        </div>
 
-let authMode = 'signup';
+        <div class="stats">
+          <div class="stat">
+            <small>Today's Screen Time</small>
+            <h3>5h 20m</h3>
+          </div>
 
-const welcome = document.getElementById('welcome');
-const auth = document.getElementById('auth');
-const application = document.getElementById('application');
+          <div class="stat">
+            <small>Eligible Time</small>
+            <h3>5h 00m</h3>
+          </div>
 
-let currentUser = null;
+          <div class="stat">
+            <small>Demo Wallet Balance</small>
+            <h3>₦250.00</h3>
+          </div>
 
-function showAuth(mode) {
-  authMode = mode;
-  welcome.classList.add('hidden');
-  application.classList.add('hidden');
-  auth.classList.remove('hidden');
+          <div class="stat">
+            <small>Campaign Status</small>
+            <h3 style="font-size:20px">Coming Soon</h3>
+          </div>
+        </div>
 
-  document.getElementById('authTitle').textContent =
-    mode === 'signup' ? 'Create your account' : 'Welcome back';
+        <div class="section">
+          <h3>📱 Screen Time Tracking</h3>
+          <p class="muted">
+            Actual phone usage tracking is not connected yet.
+            We are working towards Android usage tracking with
+            your permission.
+          </p>
+        </div>
 
-  document.getElementById('authDescription').textContent =
-    mode === 'signup'
-      ? 'Join Screen2Earn and explore digital rewards.'
-      : 'Log in to your demonstration account.';
+        <div class="section">
+          <h3>💰 Your Wallet</h3>
+          <p class="muted">
+            Your wallet will eventually show verified rewards
+            from funded advertising campaigns.
+          </p>
+          <p class="notice">
+            The displayed ₦250 is sample information only.
+            It is not real money and cannot be withdrawn.
+          </p>
+        </div>
 
-  document.getElementById('nameField').classList.toggle('hidden',mode === 'login');
+        <div class="section">
+          <h3>🚀 What's Coming?</h3>
+          <p class="muted">
+            • Real phone screen-time tracking<br>
+            • Sponsored brand campaigns<br>
+            • Verified reward calculations<br>
+            • Wallet and withdrawal options<br>
+            • Fraud protection and account security
+          </p>
+        </div>
 
-  document.getElementById('authSubmit').textContent =
-    mode === 'signup' ? 'Create Account' : 'Log In';
+      </div>
+    </section>
 
-  document.getElementById('switchText').textContent =
-    mode === 'signup' ? 'Already have an account?' : "Don't have an account?";
+    <footer>
+      © 2026 Screen2Earn. All rights reserved.<br>
+      Your Screen Time Has Value.
+    </footer>
 
-  document.getElementById('switchButton').textContent =
-    mode === 'signup' ? 'Log In' : 'Sign Up';
-}
+  </div>
 
-function toggleAuth() {
-  showAuth(authMode === 'signup' ? 'login' : 'signup');
-}
+  <script>
+    // SUPABASE CONNECTION
+    const SUPABASE_URL = 'https://uunazsefijblhvjlqocj.supabase.co';
 
-document.getElementById('authForm').addEventListener('submit',function(e) {
-  e.preventDefault();
+    const SUPABASE_KEY =
+      'sb_publishable_bH8hfYmLWKvxZlfET_k-Sw_IrXN0Pvr';
 
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
-  const name = document.getElementById('fullName').value.trim();
+    const supabaseClient = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
 
-  if(password.length < 6) {
-    alert('Password must contain at least 6 characters.');
-    return;
-  }
+    let authMode = 'signup';
 
-  if(authMode === 'signup' && !name) {
-    alert('Please enter your name.');
-    return;
-  }
+    const welcomePage = document.getElementById('welcomePage');
+    const authPage = document.getElementById('authPage');
+    const dashboardPage = document.getElementById('dashboardPage');
 
-  currentUser = {
-    name: authMode === 'signup' ? name : email.split('@')[0],
-    email: email
-  };
+    const authForm = document.getElementById('authForm');
+    const authMessage = document.getElementById('authMessage');
+    const authSubmit = document.getElementById('authSubmit');
 
-  // Demo-only session. No account or password is stored.
-  openDashboard();
-});
+    function hideAllPages() {
+      welcomePage.classList.add('hidden');
+      authPage.classList.add('hidden');
+      dashboardPage.classList.add('hidden');
+    }
 
-function openDashboard() {
-  auth.classList.add('hidden');
-  welcome.classList.add('hidden');
-  application.classList.remove('hidden');
+    function showWelcome() {
+      hideAllPages();
+      welcomePage.classList.remove('hidden');
+    }
 
-  const firstName = currentUser.name.split(' ')[0];
+    function showAuth(mode) {
+      authMode = mode;
+      hideAllPages();
+      authPage.classList.remove('hidden');
+      authMessage.style.display = 'none';
 
-  document.getElementById('greeting').textContent =
-    'Welcome back, ' + firstName + '!';
+      const isSignup = mode === 'signup';
 
-  document.getElementById('avatar').textContent =
-    firstName.charAt(0).toUpperCase();
+      document.getElementById('authTitle').textContent =
+        isSignup ? 'Create your account' : 'Welcome back';
 
-  navigate('dashboard',document.querySelector('.nav-btn'));
-}
+      document.getElementById('authDescription').textContent =
+        isSignup
+          ? 'Join Screen2Earn and get started.'
+          : 'Log in to your Screen2Earn account.';
 
-function navigate(page,button) {
-  document.querySelectorAll('.page').forEach(p =>
-    p.classList.remove('active')
-  );
+      document.getElementById('nameField').classList.toggle(
+        'hidden', !isSignup
+      );
 
-  document.getElementById(page).classList.add('active');
+      document.getElementById('fullName').required = isSignup;
 
-  document.querySelectorAll('.nav-btn').forEach(b =>
-    b.classList.remove('active')
-  );
+      authSubmit.textContent =
+        isSignup ? 'Create Account' : 'Log In';
 
-  if(button) button.classList.add('active');
+      document.getElementById('switchText').textContent =
+        isSignup ? 'Already have an account?' : "Don't have an account?";
 
-  const titles = {
-    dashboard:'Dashboard',
-    tracking:'Screen Time',
-    wallet:'My Wallet',
-    activity:'Activity History'
-  };
+      document.getElementById('switchButton').textContent =
+        isSignup ? 'Log in' : 'Sign up';
+    }
 
-  document.querySelector('.topbar h2').textContent =
-    titles[page];
-}
+    function toggleAuth() {
+      showAuth(authMode === 'signup' ? 'login' : 'signup');
+    }
 
-function logout() {
-  currentUser = null;
-  application.classList.add('hidden');
-  auth.classList.add('hidden');
-  welcome.classList.remove('hidden');
+    function showMessage(message) {
+      authMessage.textContent = message;
+      authMessage.style.display = 'block';
+    }
 
-  document.getElementById('authForm').reset();
-}
+    function openDashboard(user) {
+      hideAllPages();
+      dashboardPage.classList.remove('hidden');
 
-</script>
+      const metadataName = user.user_metadata?.full_name;
+      const emailName = user.email ? user.email.split('@')[0] : 'User';
+
+      document.getElementById('userName').textContent =
+        metadataName || emailName;
+    }
+
+    authForm.addEventListener('submit', async function(event) {
+      event.preventDefault();
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const fullName = document.getElementById('fullName').value.trim();
+
+      authSubmit.disabled = true;
+      authSubmit.textContent = 'Please wait...';
+      authMessage.style.display = 'none';
+
+      try {
+        if (authMode === 'signup') {
+          const { data, error } =
+            await supabaseClient.auth.signUp({
+              email: email,
+              password: password,
+              options: {
+                data: {
+                  full_name: fullName
+                },
+                emailRedirectTo: window.location.origin
+              }
+            });
+
+          if (error) throw error;
+
+          if (data.session) {
+            openDashboard(data.user);
+          } else {
+            showMessage(
+              'Your account has been created. Please check your email ' +
+              'and click the confirmation link before logging in.'
+            );
+          }
+
+        } else {
+          const { data, error } =
+            await supabaseClient.auth.signInWithPassword({
+              email: email,
+              password: password
+            });
+
+          if (error) throw error;
+
+          openDashboard(data.user);
+        }
+
+      } catch (error) {
+        showMessage(error.message || 'Something went wrong. Please try again.');
+      } finally {
+        authSubmit.disabled = false;
+        authSubmit.textContent =
+          authMode === 'signup' ? 'Create Account' : 'Log In';
+      }
+    });
+
+    async function logout() {
+      const { error } = await supabaseClient.auth.signOut();
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      showWelcome();
+    }
+
+    // RESTORE A SIGNED-IN USER'S SESSION
+    async function restoreSession() {
+      const { data, error } =
+        await supabaseClient.auth.getSession();
+
+      if (!error && data.session) {
+        openDashboard(data.session.user);
+      }
+    }
+
+    restoreSession();
+  </script>
 
 </body>
 </html>
