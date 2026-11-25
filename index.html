@@ -204,6 +204,35 @@
       margin-top: 9px;
     }
 
+    .section {
+      background: #171f3b;
+      border: 1px solid #293455;
+      border-radius: 17px;
+      padding: 23px;
+      margin-top: 18px;
+    }
+
+    .section h3 {
+      margin-bottom: 13px;
+    }
+
+    .profile-row {
+      margin-top: 18px;
+      padding-bottom: 13px;
+      border-bottom: 1px solid #293455;
+    }
+
+    .profile-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .profile-value {
+      margin-top: 7px;
+      font-size: 15px;
+      overflow-wrap: anywhere;
+    }
+
     .stats {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -225,18 +254,6 @@
       font-size: 27px;
       margin-top: 12px;
       color: #65e6a5;
-    }
-
-    .section {
-      background: #171f3b;
-      border: 1px solid #293455;
-      border-radius: 17px;
-      padding: 23px;
-      margin-top: 18px;
-    }
-
-    .section h3 {
-      margin-bottom: 13px;
     }
 
     .notice {
@@ -274,7 +291,6 @@
 </head>
 
 <body>
-
   <div class="container">
 
     <header>
@@ -305,7 +321,8 @@
           Create Account
         </button>
 
-        <button class="main-btn" style="background:#293653;color:white;margin-top:12px"
+        <button class="main-btn"
+          style="background:#293653;color:white;margin-top:12px"
           onclick="showAuth('login')">
           Log In
         </button>
@@ -385,6 +402,30 @@
           <p>Your Screen2Earn journey starts here.</p>
         </div>
 
+        <!-- PERSONAL PROFILE -->
+        <div class="section">
+          <h3>👤 My Profile</h3>
+          <p class="muted">Your registered account information</p>
+
+          <div class="profile-row">
+            <p class="muted">Full Name</p>
+            <p class="profile-value" id="profileName">Loading...</p>
+          </div>
+
+          <div class="profile-row">
+            <p class="muted">Email Address</p>
+            <p class="profile-value" id="profileEmail">Loading...</p>
+          </div>
+
+          <div class="profile-row">
+            <p class="muted">Account Created</p>
+            <p class="profile-value" id="profileCreated">Loading...</p>
+          </div>
+
+          <div id="profileMessage" class="message"></div>
+        </div>
+
+        <!-- DEMONSTRATION STATS -->
         <div class="stats">
           <div class="stat">
             <small>Today's Screen Time</small>
@@ -451,7 +492,8 @@
 
   <script>
     // SUPABASE CONNECTION
-    const SUPABASE_URL = 'https://uunazsefijblhvjlqocj.supabase.co';
+    const SUPABASE_URL =
+      'https://uunazsefijblhvjlqocj.supabase.co';
 
     const SUPABASE_KEY =
       'sb_publishable_bH8hfYmLWKvxZlfET_k-Sw_IrXN0Pvr';
@@ -523,17 +565,79 @@
       authMessage.style.display = 'block';
     }
 
-    function openDashboard(user) {
+    function showProfileMessage(message) {
+      const element = document.getElementById('profileMessage');
+      element.textContent = message;
+      element.style.display = 'block';
+    }
+
+    // LOAD THE USER'S PROFILE FROM SUPABASE
+    async function openDashboard(user) {
       hideAllPages();
       dashboardPage.classList.remove('hidden');
 
       const metadataName = user.user_metadata?.full_name;
-      const emailName = user.email ? user.email.split('@')[0] : 'User';
+      const emailName = user.email
+        ? user.email.split('@')[0]
+        : 'User';
 
       document.getElementById('userName').textContent =
         metadataName || emailName;
+
+      document.getElementById('profileName').textContent = 'Loading...';
+      document.getElementById('profileEmail').textContent = 'Loading...';
+      document.getElementById('profileCreated').textContent = 'Loading...';
+
+      document.getElementById('profileMessage').style.display = 'none';
+
+      try {
+        const { data: profile, error } = await supabaseClient
+          .from('profiles')
+          .select('full_name, email, created_at')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          throw error;
+        }
+
+        const name =
+          profile.full_name || metadataName || emailName;
+
+        document.getElementById('userName').textContent = name;
+
+        document.getElementById('profileName').textContent =
+          name;
+
+        document.getElementById('profileEmail').textContent =
+          profile.email || user.email || 'Not available';
+
+        document.getElementById('profileCreated').textContent =
+          profile.created_at
+            ? new Date(profile.created_at).toLocaleDateString()
+            : 'Not available';
+
+      } catch (error) {
+        console.error('Profile loading error:', error);
+
+        document.getElementById('profileName').textContent =
+          metadataName || emailName;
+
+        document.getElementById('profileEmail').textContent =
+          user.email || 'Not available';
+
+        document.getElementById('profileCreated').textContent =
+          new Date(user.created_at).toLocaleDateString();
+
+        showProfileMessage(
+          'We could not load your saved profile from the profiles table. ' +
+          'Please check the Supabase profiles table and its access policies. ' +
+          'Your account is still signed in.'
+        );
+      }
     }
 
+    // REGISTER AND LOG IN
     authForm.addEventListener('submit', async function(event) {
       event.preventDefault();
 
@@ -562,7 +666,7 @@
           if (error) throw error;
 
           if (data.session) {
-            openDashboard(data.user);
+            await openDashboard(data.user);
           } else {
             showMessage(
               'Your account has been created. Please check your email ' +
@@ -579,11 +683,13 @@
 
           if (error) throw error;
 
-          openDashboard(data.user);
+          await openDashboard(data.user);
         }
 
       } catch (error) {
-        showMessage(error.message || 'Something went wrong. Please try again.');
+        showMessage(
+          error.message || 'Something went wrong. Please try again.'
+        );
       } finally {
         authSubmit.disabled = false;
         authSubmit.textContent =
@@ -591,6 +697,7 @@
       }
     });
 
+    // LOG OUT
     async function logout() {
       const { error } = await supabaseClient.auth.signOut();
 
@@ -608,7 +715,7 @@
         await supabaseClient.auth.getSession();
 
       if (!error && data.session) {
-        openDashboard(data.session.user);
+        await openDashboard(data.session.user);
       }
     }
 
