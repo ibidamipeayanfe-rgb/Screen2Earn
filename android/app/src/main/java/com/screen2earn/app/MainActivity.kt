@@ -348,6 +348,102 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun loadWallet(balanceView: TextView, statusView: TextView, transactionsLayout: LinearLayout) {
+        val token = authToken
+        if (token.isNullOrBlank()) {
+            statusView.text = "Please log in again to view your wallet."
+            return
+        }
+        statusView.text = "Loading your secure wallet..."
+        networkExecutor.execute {
+            var walletConnection: HttpURLConnection? = null
+            var transactionConnection: HttpURLConnection? = null
+            try {
+                walletConnection = (URL("$supabaseUrl/rest/v1/wallets?select=balance_kobo,currency&limit=1").openConnection() as HttpURLConnection).apply {
+                    requestMethod = "GET"
+                    connectTimeout = 15000
+                    readTimeout = 15000
+                    setRequestProperty("apikey", supabaseKey)
+                    setRequestProperty("Authorization", "Bearer $token")
+                    setRequestProperty("Accept", "application/json")
+                }
+                val walletCode = walletConnection.responseCode
+                val walletStream = if (walletCode in 200..299) walletConnection.inputStream else walletConnection.errorStream
+                val walletResponse = walletStream.bufferedReader().use { it.readText() }
+                if (walletCode !in 200..299) throw Exception("Wallet request failed ($walletCode): $walletResponse")
+
+                val wallets = org.json.JSONArray(walletResponse)
+                if (wallets.length() == 0) {
+                    runOnUiThread {
+                        balanceView.text = "₦0.00"
+                        statusView.text = "No wallet was found for this account. Please contact support."
+                        statusView.setTextColor(Color.YELLOW)
+                    }
+                    return@execute
+                }
+                val wallet = wallets.getJSONObject(0)
+                val balanceKobo = wallet.optLong("balance_kobo", 0L)
+                val currency = wallet.optString("currency", "NGN")
+                val balanceText = String.format(Locale.US, "₦%,.2f", balanceKobo / 100.0)
+
+                transactionConnection = (URL("$supabaseUrl/rest/v1/wallet_transactions?select=transaction_type,amount_kobo,description,status,created_at&order=created_at.desc&limit=10").openConnection() as HttpURLConnection).apply {
+                    requestMethod = "GET"
+                    connectTimeout = 15000
+                    readTimeout = 15000
+                    setRequestProperty("apikey", supabaseKey)
+                    setRequestProperty("Authorization", "Bearer $token")
+                    setRequestProperty("Accept", "application/json")
+                }
+                val transactionCode = transactionConnection.responseCode
+                val transactionStream = if (transactionCode in 200..299) transactionConnection.inputStream else transactionConnection.errorStream
+                val transactionResponse = transactionStream.bufferedReader().use { it.readText() }
+                if (transactionCode !in 200..299) throw Exception("Transaction request failed ($transactionCode): $transactionResponse")
+
+                val transactions = org.json.JSONArray(transactionResponse)
+                runOnUiThread {
+                    balanceView.text = balanceText
+                    statusView.text = "Live account wallet • $currency"
+                    statusView.setTextColor(accentColor)
+                    transactionsLayout.removeAllViews()
+                    if (transactions.length() == 0) {
+                        transactionsLayout.addView(text("No transactions yet. Verified earnings and withdrawals will appear here.", 12f, Color.LTGRAY))
+                    } else {
+                        for (i in 0 until transactions.length()) {
+                            val item = transactions.getJSONObject(i)
+                            val type = item.optString("transaction_type", "transaction")
+                            val amount = item.optLong("amount_kobo", 0L)
+                            val status = item.optString("status", "pending")
+                            val description = item.optString("description", "")
+                            val sign = if (type == "withdrawal") "−" else "+"
+                            val amountLabel = String.format(Locale.US, "%s₦%,.2f", sign, amount / 100.0)
+                            val row = LinearLayout(this).apply {
+                                orientation = LinearLayout.VERTICAL
+                                setPadding(0, dp(10), 0, dp(10))
+                            }
+                            row.addView(text("$type  •  $amountLabel", 14f, if (type == "withdrawal") Color.WHITE else accentColor, true))
+                            row.addView(text(if (description.isBlank()) "Status: $status" else "$description • $status", 11f, Color.LTGRAY))
+                            transactionsLayout.addView(row)
+                            if (i < transactions.length() - 1) {
+                                val divider = android.view.View(this).apply { setBackgroundColor(Color.rgb(55, 65, 95)) }
+                                transactionsLayout.addView(divider, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(1)))
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    statusView.text = "Could not load wallet. Check your connection or log in again."
+                    statusView.setTextColor(Color.YELLOW)
+                    transactionsLayout.removeAllViews()
+                    transactionsLayout.addView(text("Wallet information is temporarily unavailable.", 12f, Color.LTGRAY))
+                }
+            } finally {
+                walletConnection?.disconnect()
+                transactionConnection?.disconnect()
+            }
+        }
+    }
+
     private fun buildDashboard() {
         val scroll = ScrollView(this).apply {
             setBackgroundColor(backgroundColor)
@@ -526,34 +622,25 @@ class MainActivity : Activity() {
         addSectionSpace(content, 12)
 
         val walletCard = makeCard()
-        walletCard.addView(
-            text("AVAILABLE BALANCE", 13f, Color.LTGRAY, true)
-        )
-        walletCard.addView(
-            text("₦0.00", 32f, accentColor, true).apply {
-                setPadding(0, dp(10), 0, dp(4))
-            }
-        )
-        walletCard.addView(
-            text("Estimated rewards: ₦0.00", 15f, Color.WHITE, true)
-        )
-        walletCard.addView(
-            text(
-                "Demo wallet. Real rewards will appear after funded " +
-                    "advertising campaigns are connected.",
-                12f,
-                Color.LTGRAY
-            ).apply {
-                setPadding(0, dp(12), 0, dp(16))
-            }
-        )
-
-        val walletButton = Button(this).apply {
-            text = "EARNINGS HISTORY"
-            isEnabled = false
+        walletCard.addView(text("AVAILABLE BALANCE", 13f, Color.LTGRAY, true))
+        val walletBalanceView = text("Loading...", 32f, accentColor, true).apply {
+            setPadding(0, dp(10), 0, dp(4))
         }
-        walletCard.addView(walletButton)
-
+        walletCard.addView(walletBalanceView)
+        val walletStatusView = text("Connecting to your private wallet...", 12f, Color.LTGRAY)
+        walletCard.addView(walletStatusView)
+        walletCard.addView(text("RECENT TRANSACTIONS", 13f, Color.LTGRAY, true).apply {
+            setPadding(0, dp(20), 0, dp(8))
+        })
+        val transactionsLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+        walletCard.addView(transactionsLayout)
+        walletCard.addView(text(
+            "Your balance and transaction history are loaded from your signed-in account. " +
+                "Rewards are not issued until verified campaigns are funded.",
+            12f, Color.LTGRAY
+        ).apply { setPadding(0, dp(14), 0, 0) })
         content.addView(walletCard)
         addSectionSpace(content, 24)
 
@@ -596,6 +683,7 @@ class MainActivity : Activity() {
 
         setContentView(scroll)
         updateUsage()
+        loadWallet(walletBalanceView, walletStatusView, transactionsLayout)
     }
 
     private fun saveGoal() {
