@@ -12,10 +12,12 @@ import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.provider.Settings
+import android.content.res.ColorStateList
 import android.view.Gravity
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.ScrollView
 import android.widget.TextView
 import java.util.Calendar
@@ -24,13 +26,23 @@ class MainActivity : Activity() {
 
     private lateinit var usageText: TextView
     private lateinit var appsLayout: LinearLayout
+    private lateinit var goalText: TextView
+    private lateinit var goalProgress: ProgressBar
 
     private val backgroundColor = Color.rgb(12, 17, 39)
     private val cardColor = Color.rgb(27, 36, 66)
     private val accentColor = Color.rgb(30, 210, 160)
+    private val goalColor = Color.rgb(100, 150, 255)
+
+    private val preferences by lazy {
+        getSharedPreferences("screen2earn_settings", Context.MODE_PRIVATE)
+    }
+
+    private var dailyGoalMinutes = 240
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        dailyGoalMinutes = preferences.getInt("daily_goal", 240)
         buildDashboard()
     }
 
@@ -61,6 +73,19 @@ class MainActivity : Activity() {
             setTextColor(color)
             if (bold) setTypeface(null, Typeface.BOLD)
         }
+    }
+
+    private fun formatTime(milliseconds: Long): String {
+        val hours = milliseconds / 3600000
+        val minutes = (milliseconds % 3600000) / 60000
+        return "${hours}h ${minutes}m"
+    }
+
+    private fun formatGoal(minutes: Int): String {
+        val hours = minutes / 60
+        val remaining = minutes % 60
+        return if (remaining == 0) "${hours}h"
+        else "${hours}h ${remaining}m"
     }
 
     private fun buildDashboard() {
@@ -113,8 +138,86 @@ class MainActivity : Activity() {
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
         )
-        cardParams.setMargins(0, dp(18), 0, dp(25))
+        cardParams.setMargins(0, dp(18), 0, dp(20))
         content.addView(todayCard, cardParams)
+
+        // Daily goal card
+        val goalCard = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(20), dp(20), dp(20))
+            background = rounded(cardColor)
+        }
+
+        goalCard.addView(
+            text("YOUR DAILY SCREEN-TIME GOAL", 14f, Color.LTGRAY, true)
+        )
+
+        goalText = text("", 25f, Color.WHITE, true)
+        goalText.setPadding(0, dp(12), 0, dp(8))
+        goalCard.addView(goalText)
+
+        goalProgress = ProgressBar(
+            this,
+            null,
+            android.R.attr.progressBarStyleHorizontal
+        ).apply {
+            max = 100
+            progressTintList = ColorStateList.valueOf(goalColor)
+            progressBackgroundTintList =
+                ColorStateList.valueOf(Color.rgb(55, 65, 95))
+        }
+
+        val progressParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            dp(12)
+        )
+        progressParams.setMargins(0, dp(8), 0, dp(8))
+        goalCard.addView(goalProgress, progressParams)
+
+        goalCard.addView(
+            text("Adjust your daily target:", 13f, Color.LTGRAY)
+        )
+
+        val goalButtons = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+
+        val decreaseButton = Button(this).apply {
+            text = "− 30 MIN"
+            setOnClickListener {
+                dailyGoalMinutes = (dailyGoalMinutes - 30).coerceAtLeast(30)
+                saveGoal()
+                updateUsage()
+            }
+        }
+
+        val increaseButton = Button(this).apply {
+            text = "+ 30 MIN"
+            setOnClickListener {
+                dailyGoalMinutes = (dailyGoalMinutes + 30).coerceAtMost(960)
+                saveGoal()
+                updateUsage()
+            }
+        }
+
+        goalButtons.addView(
+            decreaseButton,
+            LinearLayout.LayoutParams(0, dp(52), 1f)
+        )
+        goalButtons.addView(
+            increaseButton,
+            LinearLayout.LayoutParams(0, dp(52), 1f)
+        )
+
+        goalCard.addView(goalButtons)
+
+        val goalParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        goalParams.setMargins(0, 0, 0, dp(25))
+        content.addView(goalCard, goalParams)
 
         content.addView(
             text("Your Most Used Apps", 20f, Color.WHITE, true)
@@ -154,6 +257,12 @@ class MainActivity : Activity() {
         updateUsage()
     }
 
+    private fun saveGoal() {
+        preferences.edit()
+            .putInt("daily_goal", dailyGoalMinutes)
+            .apply()
+    }
+
     private fun hasUsagePermission(): Boolean {
         val appOps =
             getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
@@ -163,12 +272,6 @@ class MainActivity : Activity() {
             android.os.Process.myUid(),
             packageName
         ) == AppOpsManager.MODE_ALLOWED
-    }
-
-    private fun formatTime(milliseconds: Long): String {
-        val hours = milliseconds / 3600000
-        val minutes = (milliseconds % 3600000) / 60000
-        return "${hours}h ${minutes}m"
     }
 
     private fun getAppName(packageName: String): String {
@@ -192,10 +295,12 @@ class MainActivity : Activity() {
 
         if (!hasUsagePermission()) {
             usageText.text = "Permission needed"
+            goalText.text = "Enable Usage Access"
+            goalProgress.progress = 0
             appsLayout.removeAllViews()
             appsLayout.addView(
                 text(
-                    "Enable Usage Access below to see your app usage.",
+                    "Enable Usage Access to see your app usage.",
                     15f,
                     Color.LTGRAY
                 )
@@ -221,6 +326,27 @@ class MainActivity : Activity() {
         val total = stats.sumOf { it.totalTimeInForeground }
         usageText.text = formatTime(total)
 
+        val goalMilliseconds = dailyGoalMinutes.toLong() * 60000
+        val goalPercent = if (goalMilliseconds > 0) {
+            ((total * 100) / goalMilliseconds).toInt()
+        } else {
+            0
+        }
+
+        goalText.text =
+            "${formatTime(total)} / ${formatGoal(dailyGoalMinutes)}"
+
+        goalProgress.progress = goalPercent.coerceIn(0, 100)
+
+        val goalMessage = if (total >= goalMilliseconds) {
+            "Daily goal reached!"
+        } else {
+            "${100 - goalPercent}% remaining to reach your goal"
+        }
+
+        val goalStatus = text(goalMessage, 12f, accentColor, true)
+        goalCardStatus(goalStatus)
+
         appsLayout.removeAllViews()
 
         val topApps = stats
@@ -238,24 +364,24 @@ class MainActivity : Activity() {
         for ((index, app) in topApps.withIndex()) {
 
             val appCard = LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
+                orientation = LinearLayout.VERTICAL
                 setPadding(dp(16), dp(15), dp(16), dp(15))
                 background = rounded(cardColor, 14)
             }
 
-            // Actual Android application icon
+            val topRow = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+            }
+
             val iconView = ImageView(this).apply {
                 setImageDrawable(getAppIcon(app.packageName))
                 scaleType = ImageView.ScaleType.FIT_CENTER
             }
 
-            val iconParams = LinearLayout.LayoutParams(
-                dp(44),
-                dp(44)
-            )
+            val iconParams = LinearLayout.LayoutParams(dp(44), dp(44))
             iconParams.setMargins(0, 0, dp(13), 0)
-            appCard.addView(iconView, iconParams)
+            topRow.addView(iconView, iconParams)
 
             val nameColumn = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
@@ -279,15 +405,48 @@ class MainActivity : Activity() {
                 text(app.packageName, 10f, Color.LTGRAY)
             )
 
-            appCard.addView(nameColumn)
+            topRow.addView(nameColumn)
 
-            appCard.addView(
+            topRow.addView(
                 text(
                     formatTime(app.totalTimeInForeground),
                     14f,
                     accentColor,
                     true
                 )
+            )
+
+            appCard.addView(topRow)
+
+            // App usage progress bar compared with total reported usage
+            val appPercent = if (total > 0) {
+                ((app.totalTimeInForeground * 100) / total)
+                    .toInt().coerceIn(0, 100)
+            } else {
+                0
+            }
+
+            val bar = ProgressBar(
+                this,
+                null,
+                android.R.attr.progressBarStyleHorizontal
+            ).apply {
+                max = 100
+                progress = appPercent
+                progressTintList = ColorStateList.valueOf(accentColor)
+                progressBackgroundTintList =
+                    ColorStateList.valueOf(Color.rgb(55, 65, 95))
+            }
+
+            val barParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(7)
+            )
+            barParams.setMargins(0, dp(13), 0, dp(5))
+            appCard.addView(bar, barParams)
+
+            appCard.addView(
+                text("$appPercent% of reported app usage", 11f, Color.LTGRAY)
             )
 
             val params = LinearLayout.LayoutParams(
@@ -298,5 +457,22 @@ class MainActivity : Activity() {
 
             appsLayout.addView(appCard, params)
         }
+    }
+
+    private fun goalCardStatus(status: TextView) {
+        val parent = goalProgress.parent as? LinearLayout ?: return
+
+        val oldStatus = parent.findViewWithTag<TextView>("goal_status")
+        if (oldStatus != null) {
+            parent.removeView(oldStatus)
+        }
+
+        status.tag = "goal_status"
+        val params = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        params.setMargins(0, dp(4), 0, dp(8))
+        parent.addView(status, parent.indexOfChild(goalProgress) + 1, params)
     }
 }
