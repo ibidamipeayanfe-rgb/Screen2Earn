@@ -245,6 +245,109 @@ class MainActivity : Activity() {
         buildAuthScreen()
     }
 
+    private fun loadProfile(accountIdView: TextView, nameInput: EditText, statusView: TextView) {
+        val token = authToken ?: return
+        networkExecutor.execute {
+            var connection: HttpURLConnection? = null
+            try {
+                connection = (URL("$supabaseUrl/auth/v1/user").openConnection() as HttpURLConnection).apply {
+                    requestMethod = "GET"
+                    connectTimeout = 15000
+                    readTimeout = 15000
+                    setRequestProperty("apikey", supabaseKey)
+                    setRequestProperty("Authorization", "Bearer $token")
+                }
+                val code = connection.responseCode
+                val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+                val response = stream.bufferedReader().use { it.readText() }
+                if (code in 200..299) {
+                    val user = JSONObject(response)
+                    val userId = user.optString("id", "")
+                    val metadata = user.optJSONObject("user_metadata") ?: JSONObject()
+                    val displayName = metadata.optString("full_name", metadata.optString("name", ""))
+                    runOnUiThread {
+                        accountIdView.text = if (userId.isNotBlank()) "Account ID: $userId" else "Account ID unavailable"
+                        if (displayName.isNotBlank() && nameInput.text.isNullOrBlank()) {
+                            nameInput.setText(displayName)
+                        }
+                        statusView.text = "Profile securely linked to your account."
+                        statusView.setTextColor(accentColor)
+                    }
+                } else {
+                    runOnUiThread {
+                        accountIdView.text = "Account details could not be loaded."
+                        statusView.text = "Please log out and log in again if this continues."
+                    }
+                }
+            } catch (e: Exception) {
+                runOnUiThread { statusView.text = "Could not load profile. Check your internet connection." }
+            } finally {
+                connection?.disconnect()
+            }
+        }
+    }
+
+    private fun saveProfile(displayName: String, statusView: TextView) {
+        val cleanName = displayName.trim()
+        val token = authToken
+        if (cleanName.isBlank()) {
+            statusView.text = "Enter your name before saving."
+            statusView.setTextColor(Color.YELLOW)
+            return
+        }
+        if (token.isNullOrBlank()) {
+            statusView.text = "Please log in again to save your profile."
+            return
+        }
+        statusView.text = "Saving your profile..."
+        statusView.setTextColor(Color.LTGRAY)
+        networkExecutor.execute {
+            var connection: HttpURLConnection? = null
+            try {
+                connection = (URL("$supabaseUrl/auth/v1/user").openConnection() as HttpURLConnection).apply {
+                    requestMethod = "PUT"
+                    connectTimeout = 15000
+                    readTimeout = 15000
+                    doOutput = true
+                    setRequestProperty("apikey", supabaseKey)
+                    setRequestProperty("Authorization", "Bearer $token")
+                    setRequestProperty("Content-Type", "application/json")
+                }
+                val payload = JSONObject().put(
+                    "data",
+                    JSONObject().put("full_name", cleanName)
+                ).toString()
+                connection.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
+                val code = connection.responseCode
+                val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+                val response = stream.bufferedReader().use { it.readText() }
+                if (code in 200..299) {
+                    runOnUiThread {
+                        statusView.text = "Profile saved successfully."
+                        statusView.setTextColor(accentColor)
+                    }
+                } else {
+                    val error = try {
+                        JSONObject(response).optString("message", "Please try again.")
+                    } catch (e: Exception) {
+                        "Please try again."
+                    }
+                    runOnUiThread {
+                        statusView.text = "Could not save profile: $error"
+                        statusView.setTextColor(Color.YELLOW)
+                    }
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    statusView.text = "Connection problem. Your profile was not saved."
+                    statusView.setTextColor(Color.YELLOW)
+                }
+            } finally {
+                connection?.disconnect()
+            }
+        }
+    }
+
     private fun buildDashboard() {
         val scroll = ScrollView(this).apply {
             setBackgroundColor(backgroundColor)
@@ -277,6 +380,40 @@ class MainActivity : Activity() {
         }
         header.addView(logoutButton)
         content.addView(header)
+
+        // Personal account profile, tied to the currently authenticated Supabase user.
+        val profileCard = makeCard()
+        profileCard.addView(text("YOUR PERSONAL PROFILE", 14f, accentColor, true))
+        profileCard.addView(text("Email: ${authEmail ?: "Not available"}", 13f, Color.WHITE).apply {
+            setPadding(0, dp(10), 0, dp(8))
+        })
+        val accountIdView = text("Account ID: Loading...", 11f, Color.LTGRAY)
+        profileCard.addView(accountIdView)
+        val nameInput = EditText(this).apply {
+            hint = "Your display name"
+            setSingleLine(true)
+            setTextColor(Color.WHITE)
+            setHintTextColor(Color.LTGRAY)
+            setPadding(dp(14), dp(10), dp(14), dp(10))
+            background = rounded(backgroundColor, 12)
+        }
+        val nameParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, dp(52)
+        )
+        nameParams.setMargins(0, dp(14), 0, dp(10))
+        profileCard.addView(nameInput, nameParams)
+        val profileStatus = text("Your profile belongs to your signed-in account.", 12f, Color.LTGRAY)
+        profileCard.addView(profileStatus)
+        val saveProfileButton = Button(this).apply {
+            text = "SAVE PROFILE"
+            setOnClickListener {
+                saveProfile(nameInput.text.toString(), profileStatus)
+            }
+        }
+        profileCard.addView(saveProfileButton)
+        content.addView(profileCard)
+        addSectionSpace(content, 20)
+        loadProfile(accountIdView, nameInput, profileStatus)
 
         content.addView(text("Your Dashboard", 23f, Color.WHITE, true))
         addSectionSpace(content, 16)
