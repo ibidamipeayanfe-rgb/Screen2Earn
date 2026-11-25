@@ -1,3 +1,4 @@
+
 package com.screen2earn.app
 
 import android.app.Activity
@@ -6,81 +7,156 @@ import android.app.usage.UsageStats
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.provider.Settings
 import android.view.Gravity
-import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 
 class MainActivity : Activity() {
 
-    private lateinit var mainLayout: LinearLayout
+    private lateinit var content: LinearLayout
     private lateinit var usageText: TextView
+    private lateinit var appsLayout: LinearLayout
+
+    private val backgroundColor = Color.rgb(12, 17, 39)
+    private val cardColor = Color.rgb(27, 36, 66)
+    private val accentColor = Color.rgb(30, 210, 160)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        showScreen()
+        buildDashboard()
     }
 
     override fun onResume() {
         super.onResume()
-        if (::usageText.isInitialized) {
-            updateUsage()
+        if (::usageText.isInitialized) updateUsage()
+    }
+
+    private fun dp(value: Int): Int =
+        (value * resources.displayMetrics.density).toInt()
+
+    private fun rounded(color: Int, radius: Int = 18): GradientDrawable {
+        return GradientDrawable().apply {
+            setColor(color)
+            cornerRadius = dp(radius).toFloat()
         }
     }
 
-    private fun showScreen() {
-        mainLayout = LinearLayout(this).apply {
+    private fun text(
+        value: String,
+        size: Float,
+        color: Int,
+        bold: Boolean = false
+    ): TextView {
+        return TextView(this).apply {
+            text = value
+            textSize = size
+            setTextColor(color)
+            if (bold) setTypeface(null, Typeface.BOLD)
+        }
+    }
+
+    private fun buildDashboard() {
+
+        val scroll = ScrollView(this).apply {
+            setBackgroundColor(backgroundColor)
+            isFillViewport = true
+        }
+
+        content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(32, 48, 32, 32)
-            setBackgroundColor(android.graphics.Color.rgb(12, 17, 39))
+            setPadding(dp(22), dp(35), dp(22), dp(35))
         }
 
-        val title = TextView(this).apply {
-            text = "Screen2Earn"
-            textSize = 30f
-            setTextColor(android.graphics.Color.WHITE)
+        scroll.addView(content)
+
+        val header = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
+            setPadding(0, dp(12), 0, dp(28))
         }
 
-        val subtitle = TextView(this).apply {
-            text = "Your Screen Time Has Value."
-            textSize = 16f
-            setTextColor(android.graphics.Color.LTGRAY)
-            gravity = Gravity.CENTER
+        header.addView(
+            text("Screen2Earn", 32f, Color.WHITE, true)
+        )
+
+        header.addView(
+            text("YOUR SCREEN TIME HAS VALUE", 13f, accentColor, true)
+        )
+
+        content.addView(header)
+
+        content.addView(
+            text("Your Dashboard", 23f, Color.WHITE, true)
+        )
+
+        val todayCard = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(22), dp(22), dp(22), dp(22))
+            background = rounded(cardColor)
         }
 
-        usageText = TextView(this).apply {
-            textSize = 18f
-            setTextColor(android.graphics.Color.WHITE)
-            setPadding(0, 40, 0, 40)
+        todayCard.addView(
+            text("TODAY'S APP USAGE", 13f, Color.LTGRAY, true)
+        )
+
+        usageText = text("Loading usage data...", 32f, accentColor, true)
+        usageText.setPadding(0, dp(12), 0, dp(8))
+        todayCard.addView(usageText)
+
+        todayCard.addView(
+            text("Total reported app foreground time", 13f, Color.LTGRAY)
+        )
+
+        val cardParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        cardParams.setMargins(0, dp(18), 0, dp(25))
+        content.addView(todayCard, cardParams)
+
+        content.addView(
+            text("Your Most Used Apps", 20f, Color.WHITE, true)
+        )
+
+        appsLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
         }
+
+        content.addView(appsLayout)
 
         val permissionButton = Button(this).apply {
-            text = "Enable Usage Access"
+            text = "ENABLE USAGE ACCESS"
             setOnClickListener {
                 startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
             }
         }
 
         val refreshButton = Button(this).apply {
-            text = "Refresh Screen Time"
+            text = "REFRESH SCREEN TIME"
             setOnClickListener { updateUsage() }
         }
 
-        mainLayout.addView(title)
-        mainLayout.addView(subtitle)
-        mainLayout.addView(usageText)
-        mainLayout.addView(permissionButton)
-        mainLayout.addView(refreshButton)
+        content.addView(permissionButton)
+        content.addView(refreshButton)
 
-        setContentView(mainLayout)
+        val note = text(
+            "Screen2Earn reports app foreground time. " +
+                "This is not an exact device screen-on measurement.",
+            12f,
+            Color.LTGRAY
+        )
+        note.setPadding(0, dp(20), 0, 0)
+        content.addView(note)
+
+        setContentView(scroll)
         updateUsage()
     }
 
@@ -94,10 +170,33 @@ class MainActivity : Activity() {
         ) == AppOpsManager.MODE_ALLOWED
     }
 
+    private fun formatTime(milliseconds: Long): String {
+        val hours = milliseconds / 3600000
+        val minutes = (milliseconds % 3600000) / 60000
+        return "${hours}h ${minutes}m"
+    }
+
+    private fun getAppName(packageName: String): String {
+        return try {
+            val info = packageManager.getApplicationInfo(packageName, 0)
+            packageManager.getApplicationLabel(info).toString()
+        } catch (e: Exception) {
+            packageName
+        }
+    }
+
     private fun updateUsage() {
+
         if (!hasUsagePermission()) {
-            usageText.text =
-                "Usage access is not enabled yet.\n\nTap the button below, find Screen2Earn, and allow Usage Access."
+            usageText.text = "Permission needed"
+            appsLayout.removeAllViews()
+            appsLayout.addView(
+                text(
+                    "Enable Usage Access below to see your app usage.",
+                    15f,
+                    Color.LTGRAY
+                )
+            )
             return
         }
 
@@ -107,57 +206,74 @@ class MainActivity : Activity() {
         calendar.set(Calendar.SECOND, 0)
         calendar.set(Calendar.MILLISECOND, 0)
 
-        val startTime = calendar.timeInMillis
-        val endTime = System.currentTimeMillis()
-
-        val manager = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val manager =
+            getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
 
         val stats: List<UsageStats> = manager.queryUsageStats(
             UsageStatsManager.INTERVAL_DAILY,
-            startTime,
-            endTime
+            calendar.timeInMillis,
+            System.currentTimeMillis()
         )
 
-        val totalTime = stats.sumOf { it.totalTimeInForeground }
-        val hours = totalTime / 3600000
-        val minutes = (totalTime % 3600000) / 60000
+        val total = stats.sumOf { it.totalTimeInForeground }
+
+        usageText.text = formatTime(total)
+
+        appsLayout.removeAllViews()
 
         val topApps = stats
             .filter { it.totalTimeInForeground > 0 }
             .sortedByDescending { it.totalTimeInForeground }
             .take(8)
 
-        val formatter = SimpleDateFormat("hh:mm a", Locale.getDefault())
-
-        val result = StringBuilder()
-        result.append("TODAY'S APP USAGE\n\n")
-        result.append("Reported app foreground time:\n")
-        result.append("${hours}h ${minutes}m\n\n")
-        result.append("TOP USED APPS\n\n")
-
         if (topApps.isEmpty()) {
-            result.append("No app usage data available yet.")
-        } else {
-            for (app in topApps) {
-                val appHours = app.totalTimeInForeground / 3600000
-                val appMinutes = (app.totalTimeInForeground % 3600000) / 60000
-
-                val appName = try {
-                    val info = packageManager.getApplicationInfo(
-                        app.packageName, 0
-                    )
-                    packageManager.getApplicationLabel(info).toString()
-                } catch (e: Exception) {
-                    app.packageName
-                }
-
-                result.append("$appName — ${appHours}h ${appMinutes}m\n")
-            }
+            appsLayout.addView(
+                text("No app usage data available yet.", 15f, Color.LTGRAY)
+            )
+            return
         }
 
-        result.append("\nUpdated: ${formatter.format(Date())}")
-        result.append("\n\nThese are app foreground-time totals, not an exact device screen-on measurement.")
+        for ((index, app) in topApps.withIndex()) {
 
-        usageText.text = result.toString()
+            val appCard = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(dp(16), dp(15), dp(16), dp(15))
+                background = rounded(cardColor, 14)
+            }
+
+            val nameColumn = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f
+                )
+            }
+
+            nameColumn.addView(
+                text("${index + 1}. ${getAppName(app.packageName)}",
+                    15f, Color.WHITE, true)
+            )
+
+            nameColumn.addView(
+                text(app.packageName, 10f, Color.LTGRAY)
+            )
+
+            appCard.addView(nameColumn)
+
+            appCard.addView(
+                text(formatTime(app.totalTimeInForeground),
+                    14f, accentColor, true)
+            )
+
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            params.setMargins(0, dp(10), 0, 0)
+
+            appsLayout.addView(appCard, params)
+        }
     }
 }
