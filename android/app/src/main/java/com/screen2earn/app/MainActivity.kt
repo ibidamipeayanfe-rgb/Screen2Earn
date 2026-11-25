@@ -14,6 +14,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.Gravity
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -21,7 +22,6 @@ import java.util.Calendar
 
 class MainActivity : Activity() {
 
-    private lateinit var content: LinearLayout
     private lateinit var usageText: TextView
     private lateinit var appsLayout: LinearLayout
 
@@ -70,7 +70,7 @@ class MainActivity : Activity() {
             isFillViewport = true
         }
 
-        content = LinearLayout(this).apply {
+        val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(22), dp(35), dp(22), dp(35))
         }
@@ -83,19 +83,13 @@ class MainActivity : Activity() {
             setPadding(0, dp(12), 0, dp(28))
         }
 
-        header.addView(
-            text("Screen2Earn", 32f, Color.WHITE, true)
-        )
-
+        header.addView(text("Screen2Earn", 32f, Color.WHITE, true))
         header.addView(
             text("YOUR SCREEN TIME HAS VALUE", 13f, accentColor, true)
         )
 
         content.addView(header)
-
-        content.addView(
-            text("Your Dashboard", 23f, Color.WHITE, true)
-        )
+        content.addView(text("Your Dashboard", 23f, Color.WHITE, true))
 
         val todayCard = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -161,7 +155,8 @@ class MainActivity : Activity() {
     }
 
     private fun hasUsagePermission(): Boolean {
-        val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+        val appOps =
+            getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
 
         return appOps.checkOpNoThrow(
             AppOpsManager.OPSTR_GET_USAGE_STATS,
@@ -182,6 +177,14 @@ class MainActivity : Activity() {
             packageManager.getApplicationLabel(info).toString()
         } catch (e: Exception) {
             packageName
+        }
+    }
+
+    private fun getAppIcon(packageName: String): android.graphics.drawable.Drawable? {
+        return try {
+            packageManager.getApplicationIcon(packageName)
+        } catch (e: Exception) {
+            null
         }
     }
 
@@ -216,7 +219,6 @@ class MainActivity : Activity() {
         )
 
         val total = stats.sumOf { it.totalTimeInForeground }
-
         usageText.text = formatTime(total)
 
         appsLayout.removeAllViews()
@@ -242,6 +244,19 @@ class MainActivity : Activity() {
                 background = rounded(cardColor, 14)
             }
 
+            // Actual Android application icon
+            val iconView = ImageView(this).apply {
+                setImageDrawable(getAppIcon(app.packageName))
+                scaleType = ImageView.ScaleType.FIT_CENTER
+            }
+
+            val iconParams = LinearLayout.LayoutParams(
+                dp(44),
+                dp(44)
+            )
+            iconParams.setMargins(0, 0, dp(13), 0)
+            appCard.addView(iconView, iconParams)
+
             val nameColumn = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 layoutParams = LinearLayout.LayoutParams(
@@ -252,8 +267,12 @@ class MainActivity : Activity() {
             }
 
             nameColumn.addView(
-                text("${index + 1}. ${getAppName(app.packageName)}",
-                    15f, Color.WHITE, true)
+                text(
+                    "${index + 1}. ${getAppName(app.packageName)}",
+                    15f,
+                    Color.WHITE,
+                    true
+                )
             )
 
             nameColumn.addView(
@@ -263,8 +282,12 @@ class MainActivity : Activity() {
             appCard.addView(nameColumn)
 
             appCard.addView(
-                text(formatTime(app.totalTimeInForeground),
-                    14f, accentColor, true)
+                text(
+                    formatTime(app.totalTimeInForeground),
+                    14f,
+                    accentColor,
+                    true
+                )
             )
 
             val params = LinearLayout.LayoutParams(
